@@ -67,7 +67,7 @@ impl Device
         let low = (value[0] >> 4) as f32 / 10.0 + (value[0] & 0xF) as f32 / 100.0;
         let high = (value[1] >> 4) as f32 * 10.0 + (value[1] & 0xF) as f32;
 
-        Ok(high + low - 30.0)
+        Ok(Self::round(high + low - 30.0, 1))
     }
 
     fn try_read(&self, address: u32, size: usize) -> serial::Result<Vec<u8>>
@@ -218,6 +218,14 @@ impl Device
 
         command
     }
+
+    fn round(x: f32, n: u32) -> f32
+    {
+        let factor = 10u8.pow(n) as f32;
+        let fract = (x.fract() * factor).round() / factor;
+
+        x.trunc() + fract
+    }
 }
 
 #[test]
@@ -225,4 +233,11 @@ fn test_address_encode()
 {
     assert_eq!(Device::encode_address(0x06, 2), &[0x06]);
     assert_eq!(Device::encode_address(0x346, 2), &[130, 142, 146, 154, 202]);
+}
+
+#[test]
+fn test_round()
+{
+    assert_eq!(Device::round(100.0, 2), 100.00);
+    assert_eq!(Device::round(100.12345, 2), 100.12);
 }
