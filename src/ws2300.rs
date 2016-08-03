@@ -24,6 +24,7 @@ struct MemoryMap
     rain_24h: Memory,
     rain_total: Memory,
     pressure: Memory,
+    tendency: Memory,
 }
 
 struct Memory
@@ -49,6 +50,7 @@ impl Device
             rain_24h: Memory {address: 0x497, size: 3},
             rain_total: Memory {address: 0x4D2, size: 3},
             pressure: Memory {address: 0x5E2, size: 3},
+            tendency: Memory {address: 0x26B, size: 1},
         };
 
         Device {
@@ -222,6 +224,36 @@ impl Device
         let high = (value[2] & 0xF) as f32 * 1000.0;
 
         Ok(Self::round(low + med + high, 1))
+    }
+
+    pub fn tendency(&self) -> serial::Result<String>
+    {
+        let tendencies: Vec<&'static str> = vec![
+            "Steady", "Rising", "Falling",
+        ];
+
+        let value = try!(
+            self.try_read(&self.memory.tendency)
+        );
+
+        let index = (value[0] >> 4) as usize;
+
+        Ok(String::from(tendencies[index]))
+    }
+
+    pub fn forecast(&self) -> serial::Result<String>
+    {
+        let forecasts: Vec<&'static str> = vec![
+            "Rainy", "Cloudy", "Sunny",
+        ];
+
+        let value = try!(
+            self.try_read(&self.memory.tendency)
+        );
+
+        let index = (value[0] & 0xF) as usize;
+
+        Ok(String::from(forecasts[index]))
     }
 
     fn try_read(&self, memory: &Memory) -> serial::Result<Vec<u8>>

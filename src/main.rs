@@ -92,4 +92,14 @@ fn main()
         Ok(n) => println!("pressure: {}", n),
         Err(err) => panic!("Read error: {}", err),
     };
+
+    match ws2300.tendency() {
+        Ok(n) => println!("tendency: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
+
+    match ws2300.forecast() {
+        Ok(n) => println!("forecast: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
 }
