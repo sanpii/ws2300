@@ -19,6 +19,7 @@ struct MemoryMap
     humidity_outdoor: Memory,
     wind_speed: Memory,
     wind_dir: Memory,
+    wind_chill: Memory,
 }
 
 struct Memory
@@ -39,6 +40,7 @@ impl Device
             humidity_outdoor: Memory {address: 0x419, size: 1},
             wind_speed: Memory {address: 0x529, size: 3},
             wind_dir: Memory {address: 0x52C, size: 1},
+            wind_chill: Memory {address: 0x3A0, size: 2},
         };
 
         Device {
@@ -166,6 +168,11 @@ impl Device
         let index: usize = (value[0] >> 4) as usize;
 
         Ok(String::from(directions[index]))
+    }
+
+    pub fn wind_chill(&self) -> serial::Result<f32>
+    {
+        self.temperature(&self.memory.wind_chill)
     }
 
     fn try_read(&self, memory: &Memory) -> serial::Result<Vec<u8>>
