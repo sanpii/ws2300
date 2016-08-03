@@ -10,7 +10,7 @@ pub struct Device
     memory: MemoryMap,
 }
 
-#[derive(Debug)]
+#[derive(RustcEncodable)]
 pub struct Data
 {
     temperature_indoor: f32,

@@ -3,6 +3,7 @@ extern crate docopt;
 extern crate rustc_serialize;
 
 use docopt::Docopt;
+use rustc_serialize::json;
 
 mod ws2300;
 
@@ -28,8 +29,13 @@ fn main()
 
     let ws2300 = ws2300::Device::new(args.arg_device);
 
-    match ws2300.read_all() {
-        Ok(data) => println!("{:?}", data),
+    let data = match ws2300.read_all() {
+        Ok(data) => data,
         Err(err) => panic!("Read error: {}", err),
+    };
+
+    match json::encode(&data) {
+        Ok(json) => println!("{}", json),
+        Err(err) => panic!("JSON error: {}", err),
     };
 }
