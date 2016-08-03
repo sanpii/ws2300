@@ -219,22 +219,21 @@ impl Device
 
     fn check_data(answer: u8, response: Vec<u8>) -> serial::Result<()>
     {
-        let mut checksum: u8 = 0;
+        let mut checksum: u32 = 0;
 
         for i in 0..response.len() {
-            checksum += response[i];
+            checksum += response[i] as u32;
         }
 
         checksum &= 0xFF;
 
-        if checksum == answer {
+        if checksum == answer as u32 {
             Ok(())
         }
         else {
-            println!("{} {:?} {}", answer, response, checksum);
             Err(
                 serial::Error::new(serial::ErrorKind::Io(std::io::ErrorKind::Other), "Check data error")
-               )
+            )
         }
     }
 
