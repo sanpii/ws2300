@@ -7,14 +7,31 @@ use std::time::Duration;
 pub struct Device
 {
     port: Box<RefCell<serial::SerialPort>>,
+    memory: MemoryMap,
+}
+
+struct MemoryMap
+{
+    temperature_indoor: Memory,
+}
+
+struct Memory
+{
+    address: u32,
+    size: usize
 }
 
 impl Device
 {
     pub fn new() -> Device
     {
+        let memory = MemoryMap {
+            temperature_indoor: Memory {address: 0x346, size: 2},
+        };
+
         Device {
             port: Self::open(),
+            memory: memory,
         }
     }
 
@@ -61,7 +78,7 @@ impl Device
     pub fn temperature_indoor(&self) -> serial::Result<f32>
     {
         let value = try!(
-            self.try_read(0x346, 2)
+            self.try_read(&self.memory.temperature_indoor)
         );
 
         let low = (value[0] >> 4) as f32 / 10.0 + (value[0] & 0xF) as f32 / 100.0;
@@ -70,10 +87,10 @@ impl Device
         Ok(Self::round(high + low - 30.0, 1))
     }
 
-    fn try_read(&self, address: u32, size: usize) -> serial::Result<Vec<u8>>
+    fn try_read(&self, memory: &Memory) -> serial::Result<Vec<u8>>
     {
         for _ in 0..50 {
-            match self.read(address, size) {
+            match self.read(memory) {
                 Ok(n) => return Ok(n),
                 Err(_) => (),
             };
@@ -84,11 +101,11 @@ impl Device
         )
     }
 
-    fn read(&self, address: u32, size: usize) -> serial::Result<Vec<u8>>
+    fn read(&self, memory: &Memory) -> serial::Result<Vec<u8>>
     {
-        let mut response: Vec<u8> = Vec::with_capacity(size);
+        let mut response: Vec<u8> = Vec::with_capacity(memory.size);
         let mut buffer: [u8; 1] = [0; 1];
-        let command = Self::encode_address(address, size);
+        let command = Self::encode_address(memory);
 
         try!(
             self.reset()
@@ -106,7 +123,7 @@ impl Device
             );
         }
 
-        for _ in 0..size {
+        for _ in 0..memory.size {
             try!(
                 self.port.borrow_mut().read_exact(&mut buffer[..])
             );
@@ -198,21 +215,21 @@ impl Device
         Ok(())
     }
 
-    fn encode_address(address: u32, number: usize) -> Vec<u8>
+    fn encode_address(memory: &Memory) -> Vec<u8>
     {
         let mut command: Vec<u8> = vec![];
 
-        if address == 0x06 {
+        if memory.address == 0x06 {
             command = vec![0x06]
         }
         else {
             for i in 0..4 {
-                let nibble = (address >> (4 * (3 - i))) & 0x0F;
+                let nibble = (memory.address >> (4 * (3 - i))) & 0x0F;
                 command.push(0x82 + (nibble * 4) as u8);
             }
 
             command.push(
-                std::cmp::min(0xC2 + number * 4, 0xFE) as u8
+                std::cmp::min(0xC2 + memory.size * 4, 0xFE) as u8
             );
         }
 
@@ -221,7 +238,7 @@ impl Device
 
     fn round(x: f32, n: u32) -> f32
     {
-        let factor = 10u8.pow(n) as f32;
+        let factor = 10u32.pow(n) as f32;
         let fract = (x.fract() * factor).round() / factor;
 
         x.trunc() + fract
@@ -231,8 +248,8 @@ impl Device
 #[test]
 fn test_address_encode()
 {
-    assert_eq!(Device::encode_address(0x06, 2), &[0x06]);
-    assert_eq!(Device::encode_address(0x346, 2), &[130, 142, 146, 154, 202]);
+    assert_eq!(Device::encode_address(&Memory {address: 0x06, size: 2}), &[0x06]);
+    assert_eq!(Device::encode_address(&Memory {address: 0x346, size: 2}), &[130, 142, 146, 154, 202]);
 }
 
 #[test]
@@ -240,4 +257,6 @@ fn test_round()
 {
     assert_eq!(Device::round(100.0, 2), 100.00);
     assert_eq!(Device::round(100.12345, 2), 100.12);
+    assert_eq!(Device::round(-100.12345, 2), -100.12);
+    assert_eq!(Device::round(100.12345, 5), 100.12345);
 }
