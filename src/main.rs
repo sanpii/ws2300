@@ -38,6 +38,11 @@ fn main()
         Err(err) => panic!("Read error: {}", err),
     };
 
+    match ws2300.dewpoint() {
+        Ok(n) => println!("dewpoint: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
+
     match ws2300.humidity_indoor() {
         Ok(n) => println!("humidity_indoor: {}", n),
         Err(err) => panic!("Read error: {}", err),

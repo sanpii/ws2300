@@ -14,6 +14,7 @@ struct MemoryMap
 {
     temperature_indoor: Memory,
     temperature_outdoor: Memory,
+    dewpoint: Memory,
     humidity_indoor: Memory,
     humidity_outdoor: Memory,
 }
@@ -31,6 +32,7 @@ impl Device
         let memory = MemoryMap {
             temperature_indoor: Memory {address: 0x346, size: 2},
             temperature_outdoor: Memory {address: 0x373, size: 2},
+            dewpoint: Memory {address: 0x3CE, size: 2},
             humidity_indoor: Memory {address: 0x3FB, size: 1},
             humidity_outdoor: Memory {address: 0x419, size: 1},
         };
@@ -87,6 +89,11 @@ impl Device
     pub fn temperature_outdoor(&self) -> serial::Result<f32>
     {
         self.temperature(&self.memory.temperature_outdoor)
+    }
+
+    pub fn dewpoint(&self) -> serial::Result<f32>
+    {
+        self.temperature(&self.memory.dewpoint)
     }
 
     fn temperature(&self, memory: &Memory) -> serial::Result<f32>
