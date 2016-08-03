@@ -87,4 +87,9 @@ fn main()
         Ok(n) => println!("rain_total: {}", n),
         Err(err) => panic!("Read error: {}", err),
     };
+
+    match ws2300.pressure() {
+        Ok(n) => println!("pressure: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
 }

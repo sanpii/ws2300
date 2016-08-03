@@ -23,6 +23,7 @@ struct MemoryMap
     rain_1h: Memory,
     rain_24h: Memory,
     rain_total: Memory,
+    pressure: Memory,
 }
 
 struct Memory
@@ -47,6 +48,7 @@ impl Device
             rain_1h: Memory {address: 0x4B4, size: 3},
             rain_24h: Memory {address: 0x497, size: 3},
             rain_total: Memory {address: 0x4D2, size: 3},
+            pressure: Memory {address: 0x5E2, size: 3},
         };
 
         Device {
@@ -205,6 +207,19 @@ impl Device
         let low = (value[0] >> 4) as f32 / 10.0 + (value[0] & 0xF) as f32 / 100.0;
         let med = (value[1] >> 4) as f32 * 10.0 + (value[1] & 0xF) as f32;
         let high = (value[2] >> 4) as f32 * 1000.0 + (value[2] & 0xF) as f32 * 100.0;
+
+        Ok(Self::round(low + med + high, 1))
+    }
+
+    pub fn pressure(&self) -> serial::Result<f32>
+    {
+        let value = try!(
+            self.try_read(&self.memory.pressure)
+        );
+
+        let low = (value[0] >> 4) as f32 + (value[0] & 0xF) as f32 / 10.0;
+        let med = (value[1] >> 4) as f32 * 100.0 + (value[1] & 0xF) as f32 * 10.0;
+        let high = (value[2] & 0xF) as f32 * 1000.0;
 
         Ok(Self::round(low + med + high, 1))
     }
