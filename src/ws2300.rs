@@ -10,6 +10,26 @@ pub struct Device
     memory: MemoryMap,
 }
 
+#[derive(Debug)]
+pub struct Data
+{
+    temperature_indoor: f32,
+    temperature_outdoor: f32,
+    dewpoint: f32,
+    humidity_indoor: u32,
+    humidity_outdoor: u32,
+    wind_speed: f32,
+    wind_dir: f32,
+    wind_direction: String,
+    wind_chill: f32,
+    rain_1h: f32,
+    rain_24h: f32,
+    rain_total: f32,
+    pressure: f32,
+    tendency: String,
+    forecast: String,
+}
+
 struct MemoryMap
 {
     temperature_indoor: Memory,
@@ -95,6 +115,27 @@ impl Device
         );
 
         Ok(())
+    }
+
+    pub fn read_all(&self) -> serial::Result<Data>
+    {
+        Ok(Data {
+            temperature_indoor: try!(self.temperature_indoor()),
+            temperature_outdoor: try!(self.temperature_outdoor()),
+            dewpoint: try!(self.dewpoint()),
+            humidity_indoor: try!(self.humidity_indoor()),
+            humidity_outdoor: try!(self.humidity_outdoor()),
+            wind_speed: try!(self.wind_speed()),
+            wind_dir: try!(self.wind_dir()),
+            wind_direction: try!(self.wind_direction()),
+            wind_chill: try!(self.wind_chill()),
+            rain_1h: try!(self.rain_1h()),
+            rain_24h: try!(self.rain_24h()),
+            rain_total: try!(self.rain_total()),
+            pressure: try!(self.pressure()),
+            tendency: try!(self.tendency()),
+            forecast: try!(self.forecast()),
+        })
     }
 
     pub fn temperature_indoor(&self) -> serial::Result<f32>
