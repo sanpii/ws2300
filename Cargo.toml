@@ -5,3 +5,5 @@ authors = ["Sanpi <sanpi@homecomputing.fr>"]
 
 [dependencies]
 serial = "0.3"
+docopt = "0.6"
+rustc-serialize = "0.3"

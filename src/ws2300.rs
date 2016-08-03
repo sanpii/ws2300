@@ -24,7 +24,7 @@ struct Memory
 
 impl Device
 {
-    pub fn new() -> Device
+    pub fn new(device: String) -> Device
     {
         let memory = MemoryMap {
             temperature_indoor: Memory {address: 0x346, size: 2},
@@ -32,16 +32,14 @@ impl Device
         };
 
         Device {
-            port: Self::open(),
+            port: Self::open(device),
             memory: memory,
         }
     }
 
-    fn open() -> Box<RefCell<serial::SerialPort>>
+    fn open(device: String) -> Box<RefCell<serial::SerialPort>>
     {
-        let device = "/dev/ttyUSB0";
-
-        let mut port = match serial::open(device) {
+        let mut port = match serial::open(&device) {
             Ok(port) => port,
             Err(err) => panic!("Unable to open {}: {}.", device, err),
         };
