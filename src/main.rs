@@ -52,4 +52,9 @@ fn main()
         Ok(n) => println!("humidity_outdoor: {}", n),
         Err(err) => panic!("Read error: {}", err),
     };
+
+    match ws2300.wind_speed() {
+        Ok(n) => println!("wind_speed: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
 }
