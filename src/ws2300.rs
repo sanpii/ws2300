@@ -153,6 +153,21 @@ impl Device
         Ok(Self::round(low * 22.5, 1))
     }
 
+    pub fn wind_direction(&self) -> serial::Result<String>
+    {
+        let directions: Vec<&'static str> = vec![
+            "N","NNE","NE","ENE","E","ESE","SE","SSE",
+            "S","SSW","SW","WSW","W","WNW","NW","NNW",
+        ];
+        let value = try!(
+            self.try_read(&self.memory.wind_dir)
+        );
+
+        let index: usize = (value[0] >> 4) as usize;
+
+        Ok(String::from(directions[index]))
+    }
+
     fn try_read(&self, memory: &Memory) -> serial::Result<Vec<u8>>
     {
         for _ in 0..50 {
