@@ -14,6 +14,8 @@ struct MemoryMap
 {
     temperature_indoor: Memory,
     temperature_outdoor: Memory,
+    humidity_indoor: Memory,
+    humidity_outdoor: Memory,
 }
 
 struct Memory
@@ -29,6 +31,8 @@ impl Device
         let memory = MemoryMap {
             temperature_indoor: Memory {address: 0x346, size: 2},
             temperature_outdoor: Memory {address: 0x373, size: 2},
+            humidity_indoor: Memory {address: 0x3FB, size: 1},
+            humidity_outdoor: Memory {address: 0x419, size: 1},
         };
 
         Device {
@@ -95,6 +99,27 @@ impl Device
         let high = (value[1] >> 4) as f32 * 10.0 + (value[1] & 0xF) as f32;
 
         Ok(Self::round(high + low - 30.0, 1))
+    }
+
+    pub fn humidity_indoor(&self) -> serial::Result<u32>
+    {
+        self.humidity(&self.memory.humidity_indoor)
+    }
+
+    pub fn humidity_outdoor(&self) -> serial::Result<u32>
+    {
+        self.humidity(&self.memory.humidity_outdoor)
+    }
+
+    fn humidity(&self, memory: &Memory) -> serial::Result<u32>
+    {
+        let value = try!(
+            self.try_read(memory)
+        );
+
+        let low = (value[0] >> 4) as u32 * 10 + (value[0] & 0xF) as u32;
+
+        Ok(low)
     }
 
     fn try_read(&self, memory: &Memory) -> serial::Result<Vec<u8>>

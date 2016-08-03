@@ -29,12 +29,22 @@ fn main()
     let ws2300 = ws2300::Device::new(args.arg_device);
 
     match ws2300.temperature_indoor() {
-        Ok(n) => println!("{:?}", n),
+        Ok(n) => println!("temperature_indoor: {}", n),
         Err(err) => panic!("Read error: {}", err),
     };
 
     match ws2300.temperature_outdoor() {
-        Ok(n) => println!("{:?}", n),
+        Ok(n) => println!("temperature_outdoor: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
+
+    match ws2300.humidity_indoor() {
+        Ok(n) => println!("humidity_indoor: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
+
+    match ws2300.humidity_outdoor() {
+        Ok(n) => println!("humidity_outdoor: {}", n),
         Err(err) => panic!("Read error: {}", err),
     };
 }
