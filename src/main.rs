@@ -57,4 +57,9 @@ fn main()
         Ok(n) => println!("wind_speed: {}", n),
         Err(err) => panic!("Read error: {}", err),
     };
+
+    match ws2300.wind_dir() {
+        Ok(n) => println!("wind_dir: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
 }

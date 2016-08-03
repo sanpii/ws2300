@@ -18,6 +18,7 @@ struct MemoryMap
     humidity_indoor: Memory,
     humidity_outdoor: Memory,
     wind_speed: Memory,
+    wind_dir: Memory,
 }
 
 struct Memory
@@ -37,6 +38,7 @@ impl Device
             humidity_indoor: Memory {address: 0x3FB, size: 1},
             humidity_outdoor: Memory {address: 0x419, size: 1},
             wind_speed: Memory {address: 0x529, size: 3},
+            wind_dir: Memory {address: 0x52C, size: 1},
         };
 
         Device {
@@ -138,6 +140,17 @@ impl Device
         );
 
         Ok(((((value[1] & 0xF) as u16) << 8) as f32 + value[0] as f32) / 10.0)
+    }
+
+    pub fn wind_dir(&self) -> serial::Result<f32>
+    {
+        let value = try!(
+            self.try_read(&self.memory.wind_dir)
+        );
+
+        let low = (value[0] >> 4) as f32;
+
+        Ok(Self::round(low * 22.5, 1))
     }
 
     fn try_read(&self, memory: &Memory) -> serial::Result<Vec<u8>>
