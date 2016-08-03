@@ -13,6 +13,7 @@ pub struct Device
 struct MemoryMap
 {
     temperature_indoor: Memory,
+    temperature_outdoor: Memory,
 }
 
 struct Memory
@@ -27,6 +28,7 @@ impl Device
     {
         let memory = MemoryMap {
             temperature_indoor: Memory {address: 0x346, size: 2},
+            temperature_outdoor: Memory {address: 0x373, size: 2},
         };
 
         Device {
@@ -77,8 +79,18 @@ impl Device
 
     pub fn temperature_indoor(&self) -> serial::Result<f32>
     {
+        self.temperature(&self.memory.temperature_indoor)
+    }
+
+    pub fn temperature_outdoor(&self) -> serial::Result<f32>
+    {
+        self.temperature(&self.memory.temperature_outdoor)
+    }
+
+    fn temperature(&self, memory: &Memory) -> serial::Result<f32>
+    {
         let value = try!(
-            self.try_read(&self.memory.temperature_indoor)
+            self.try_read(memory)
         );
 
         let low = (value[0] >> 4) as f32 / 10.0 + (value[0] & 0xF) as f32 / 100.0;

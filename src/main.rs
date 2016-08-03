@@ -10,4 +10,9 @@ fn main()
         Ok(n) => println!("{:?}", n),
         Err(err) => panic!("Read error: {}", err),
     };
+
+    match ws2300.temperature_outdoor() {
+        Ok(n) => println!("{:?}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
 }
