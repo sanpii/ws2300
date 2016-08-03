@@ -72,4 +72,19 @@ fn main()
         Ok(n) => println!("wind_chill: {}", n),
         Err(err) => panic!("Read error: {}", err),
     };
+
+    match ws2300.rain_1h() {
+        Ok(n) => println!("rain_1h: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
+
+    match ws2300.rain_24h() {
+        Ok(n) => println!("rain_24h: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
+
+    match ws2300.rain_total() {
+        Ok(n) => println!("rain_total: {}", n),
+        Err(err) => panic!("Read error: {}", err),
+    };
 }

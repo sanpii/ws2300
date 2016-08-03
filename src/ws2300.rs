@@ -20,6 +20,9 @@ struct MemoryMap
     wind_speed: Memory,
     wind_dir: Memory,
     wind_chill: Memory,
+    rain_1h: Memory,
+    rain_24h: Memory,
+    rain_total: Memory,
 }
 
 struct Memory
@@ -41,6 +44,9 @@ impl Device
             wind_speed: Memory {address: 0x529, size: 3},
             wind_dir: Memory {address: 0x52C, size: 1},
             wind_chill: Memory {address: 0x3A0, size: 2},
+            rain_1h: Memory {address: 0x4B4, size: 3},
+            rain_24h: Memory {address: 0x497, size: 3},
+            rain_total: Memory {address: 0x4D2, size: 3},
         };
 
         Device {
@@ -173,6 +179,34 @@ impl Device
     pub fn wind_chill(&self) -> serial::Result<f32>
     {
         self.temperature(&self.memory.wind_chill)
+    }
+
+    pub fn rain_1h(&self) -> serial::Result<f32>
+    {
+        self.rain(&self.memory.rain_1h)
+    }
+
+    pub fn rain_24h(&self) -> serial::Result<f32>
+    {
+        self.rain(&self.memory.rain_24h)
+    }
+
+    pub fn rain_total(&self) -> serial::Result<f32>
+    {
+        self.rain(&self.memory.rain_total)
+    }
+
+    fn rain(&self, memory: &Memory) -> serial::Result<f32>
+    {
+        let value = try!(
+            self.try_read(memory)
+        );
+
+        let low = (value[0] >> 4) as f32 / 10.0 + (value[0] & 0xF) as f32 / 100.0;
+        let med = (value[1] >> 4) as f32 * 10.0 + (value[1] & 0xF) as f32;
+        let high = (value[2] >> 4) as f32 * 1000.0 + (value[2] & 0xF) as f32 * 100.0;
+
+        Ok(Self::round(low + med + high, 1))
     }
 
     fn try_read(&self, memory: &Memory) -> serial::Result<Vec<u8>>
