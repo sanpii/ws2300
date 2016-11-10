@@ -104,15 +104,9 @@ impl Device
             stop_bits: serial::Stop1,
         };
 
-        try!(
-            port.configure(&SETTINGS)
-        );
-        try!(
-            port.set_rts(true)
-        );
-        try!(
-            port.set_dtr(false)
-        );
+        port.configure(&SETTINGS)?;
+        port.set_rts(true)?;
+        port.set_dtr(false)?;
 
         Ok(())
     }
@@ -120,21 +114,21 @@ impl Device
     pub fn read_all(&self) -> serial::Result<Data>
     {
         Ok(Data {
-            temperature_indoor: try!(self.temperature_indoor()),
-            temperature_outdoor: try!(self.temperature_outdoor()),
-            dewpoint: try!(self.dewpoint()),
-            humidity_indoor: try!(self.humidity_indoor()),
-            humidity_outdoor: try!(self.humidity_outdoor()),
-            wind_speed: try!(self.wind_speed()),
-            wind_dir: try!(self.wind_dir()),
-            wind_direction: try!(self.wind_direction()),
-            wind_chill: try!(self.wind_chill()),
-            rain_1h: try!(self.rain_1h()),
-            rain_24h: try!(self.rain_24h()),
-            rain_total: try!(self.rain_total()),
-            pressure: try!(self.pressure()),
-            tendency: try!(self.tendency()),
-            forecast: try!(self.forecast()),
+            temperature_indoor: self.temperature_indoor()?,
+            temperature_outdoor: self.temperature_outdoor()?,
+            dewpoint: self.dewpoint()?,
+            humidity_indoor: self.humidity_indoor()?,
+            humidity_outdoor: self.humidity_outdoor()?,
+            wind_speed: self.wind_speed()?,
+            wind_dir: self.wind_dir()?,
+            wind_direction: self.wind_direction()?,
+            wind_chill: self.wind_chill()?,
+            rain_1h: self.rain_1h()?,
+            rain_24h: self.rain_24h()?,
+            rain_total: self.rain_total()?,
+            pressure: self.pressure()?,
+            tendency: self.tendency()?,
+            forecast: self.forecast()?,
         })
     }
 
@@ -155,9 +149,7 @@ impl Device
 
     fn temperature(&self, memory: &Memory) -> serial::Result<f32>
     {
-        let value = try!(
-            self.try_read(memory)
-        );
+        let value = self.try_read(memory)?;
 
         let low = (value[0] >> 4) as f32 / 10.0 + (value[0] & 0xF) as f32 / 100.0;
         let high = (value[1] >> 4) as f32 * 10.0 + (value[1] & 0xF) as f32;
@@ -177,9 +169,7 @@ impl Device
 
     fn humidity(&self, memory: &Memory) -> serial::Result<u32>
     {
-        let value = try!(
-            self.try_read(memory)
-        );
+        let value = self.try_read(memory)?;
 
         let low = (value[0] >> 4) as u32 * 10 + (value[0] & 0xF) as u32;
 
@@ -188,18 +178,14 @@ impl Device
 
     pub fn wind_speed(&self) -> serial::Result<f32>
     {
-        let value = try!(
-            self.try_read(&self.memory.wind_speed)
-        );
+        let value = self.try_read(&self.memory.wind_speed)?;
 
         Ok(((((value[1] & 0xF) as u16) << 8) as f32 + value[0] as f32) / 10.0)
     }
 
     pub fn wind_dir(&self) -> serial::Result<f32>
     {
-        let value = try!(
-            self.try_read(&self.memory.wind_dir)
-        );
+        let value = self.try_read(&self.memory.wind_dir)?;
 
         let low = (value[0] >> 4) as f32;
 
@@ -212,9 +198,7 @@ impl Device
             "N","NNE","NE","ENE","E","ESE","SE","SSE",
             "S","SSW","SW","WSW","W","WNW","NW","NNW",
         ];
-        let value = try!(
-            self.try_read(&self.memory.wind_dir)
-        );
+        let value = self.try_read(&self.memory.wind_dir)?;
 
         let index: usize = (value[0] >> 4) as usize;
 
@@ -243,9 +227,7 @@ impl Device
 
     fn rain(&self, memory: &Memory) -> serial::Result<f32>
     {
-        let value = try!(
-            self.try_read(memory)
-        );
+        let value = self.try_read(memory)?;
 
         let low = (value[0] >> 4) as f32 / 10.0 + (value[0] & 0xF) as f32 / 100.0;
         let med = (value[1] >> 4) as f32 * 10.0 + (value[1] & 0xF) as f32;
@@ -256,9 +238,7 @@ impl Device
 
     pub fn pressure(&self) -> serial::Result<f32>
     {
-        let value = try!(
-            self.try_read(&self.memory.pressure)
-        );
+        let value = self.try_read(&self.memory.pressure)?;
 
         let low = (value[0] >> 4) as f32 + (value[0] & 0xF) as f32 / 10.0;
         let med = (value[1] >> 4) as f32 * 100.0 + (value[1] & 0xF) as f32 * 10.0;
@@ -273,9 +253,7 @@ impl Device
             "Steady", "Rising", "Falling",
         ];
 
-        let value = try!(
-            self.try_read(&self.memory.tendency)
-        );
+        let value = self.try_read(&self.memory.tendency)?;
 
         let index = (value[0] >> 4) as usize;
 
@@ -288,9 +266,7 @@ impl Device
             "Rainy", "Cloudy", "Sunny",
         ];
 
-        let value = try!(
-            self.try_read(&self.memory.tendency)
-        );
+        let value = self.try_read(&self.memory.tendency)?;
 
         let index = (value[0] & 0xF) as usize;
 
@@ -317,37 +293,23 @@ impl Device
         let mut buffer: [u8; 1] = [0; 1];
         let command = Self::encode_address(memory);
 
-        try!(
-            self.reset()
-        );
+        self.reset()?;
 
         for i in 0..5 {
-            try!(
-                self.port.borrow_mut().write(&[command[i]])
-            );
-            try!(
-                self.port.borrow_mut().read_exact(&mut buffer[..])
-            );
-            try!(
-                Self::check(command[i], i, buffer[0])
-            );
+            self.port.borrow_mut().write(&[command[i]])?;
+            self.port.borrow_mut().read_exact(&mut buffer[..])?;
+            Self::check(command[i], i, buffer[0])?;
         }
 
         for _ in 0..memory.size {
-            try!(
-                self.port.borrow_mut().read_exact(&mut buffer[..])
-            );
+            self.port.borrow_mut().read_exact(&mut buffer[..])?;
 
             response.push(buffer[0]);
         }
 
-        try!(
-            self.port.borrow_mut().read_exact(&mut buffer[..])
-        );
+        self.port.borrow_mut().read_exact(&mut buffer[..])?;
 
-        try!(
-            Self::check_data(buffer[0], response.clone())
-        );
+        Self::check_data(buffer[0], response.clone())?;
 
         Ok(response)
     }
@@ -399,12 +361,8 @@ impl Device
         let mut buffer: [u8; 1] = [0; 1];
 
         'outer: for _ in 0..100 {
-            try!(
-                self.port.borrow_mut().flush()
-            );
-            try!(
-                self.port.borrow_mut().write(&[0x06])
-            );
+            self.port.borrow_mut().flush()?;
+            self.port.borrow_mut().write(&[0x06])?;
 
             sleep(Duration::from_millis(100));
 
