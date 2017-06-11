@@ -1,15 +1,17 @@
 extern crate serial;
 extern crate docopt;
-extern crate rustc_serialize;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
 
 use docopt::Docopt;
-use rustc_serialize::json;
 
 mod ws2300;
 
 static USAGE: &'static str = "Usage: ws2300 <device>";
 
-#[derive(RustcDecodable)]
+#[derive(Deserialize)]
 struct Args
 {
     arg_device: String,
@@ -22,7 +24,7 @@ fn main()
         Err(e) => e.exit(),
     };
 
-    let args: Args = match docopt.decode() {
+    let args: Args = match docopt.deserialize() {
         Ok(args) => args,
         Err(e) => e.exit(),
     };
@@ -34,7 +36,7 @@ fn main()
         Err(err) => panic!("Read error: {}", err),
     };
 
-    match json::encode(&data) {
+    match serde_json::to_string(&data) {
         Ok(json) => println!("{}", json),
         Err(err) => panic!("JSON error: {}", err),
     };
