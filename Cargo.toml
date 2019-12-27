@@ -5,7 +5,7 @@ authors = ["Sanpi <sanpi@homecomputing.fr>"]
 edition = "2018"
 
 [dependencies]
-serial = "0.3"
+serial = "0.4"
 docopt = "0.8"
 serde = "1.0"
 serde_derive = "1.0"
