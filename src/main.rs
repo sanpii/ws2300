@@ -2,7 +2,7 @@ use docopt::Docopt;
 
 mod ws2300;
 
-static USAGE: &'static str = "Usage: ws2300 <device>";
+static USAGE: &str = "Usage: ws2300 <device>";
 
 #[derive(serde_derive::Deserialize)]
 struct Args

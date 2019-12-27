@@ -75,7 +75,7 @@ impl Device
 
         Device {
             port: Self::open(device),
-            memory: memory,
+            memory,
         }
     }
 
@@ -276,10 +276,9 @@ impl Device
     fn try_read(&self, memory: &Memory) -> serial::Result<Vec<u8>>
     {
         for _ in 0..50 {
-            match self.read(memory) {
-                Ok(n) => return Ok(n),
-                Err(_) => (),
-            };
+            if let Ok(n) = self.read(memory) {
+                return Ok(n);
+            }
         }
 
         Err(
@@ -295,10 +294,10 @@ impl Device
 
         self.reset()?;
 
-        for i in 0..5 {
-            self.port.borrow_mut().write(&[command[i]])?;
+        for (i, c) in command.iter().enumerate().take(5) {
+            self.port.borrow_mut().write_all(&[*c])?;
             self.port.borrow_mut().read_exact(&mut buffer[..])?;
-            Self::check(command[i], i, buffer[0])?;
+            Self::check(*c, i, buffer[0])?;
         }
 
         for _ in 0..memory.size {
@@ -316,14 +315,12 @@ impl Device
 
     fn check(command: u8, sequence: usize, answer: u8) -> serial::Result<()>
     {
-        let checksum;
-
-        if sequence < 4 {
-            checksum = (sequence as u8) * 16 + (command - 0x82) / 4;
+        let checksum = if sequence < 4 {
+            (sequence as u8) * 16 + (command - 0x82) / 4
         }
         else {
-            checksum = 0x30 + (command - 0xC2) / 4;
-        }
+            0x30 + (command - 0xC2) / 4
+        };
 
 
         if checksum == answer {
@@ -340,8 +337,8 @@ impl Device
     {
         let mut checksum: u32 = 0;
 
-        for i in 0..response.len() {
-            checksum += response[i] as u32;
+        for r in &response {
+            checksum += *r as u32;
         }
 
         checksum &= 0xFF;
@@ -362,7 +359,7 @@ impl Device
 
         'outer: for _ in 0..100 {
             self.port.borrow_mut().flush()?;
-            self.port.borrow_mut().write(&[0x06])?;
+            self.port.borrow_mut().write_all(&[0x06])?;
 
             sleep(Duration::from_millis(100));
 
