@@ -1,28 +1,18 @@
-use docopt::Docopt;
+use structopt::StructOpt;
 
 mod ws2300;
 
-static USAGE: &str = "Usage: ws2300 <device>";
-
-#[derive(serde_derive::Deserialize)]
-struct Args
+#[derive(StructOpt)]
+struct Opt
 {
-    arg_device: String,
+    device: String,
 }
 
 fn main()
 {
-    let docopt = match Docopt::new(USAGE) {
-        Ok(d) => d,
-        Err(e) => e.exit(),
-    };
+    let opt = Opt::from_args();
 
-    let args: Args = match docopt.deserialize() {
-        Ok(args) => args,
-        Err(e) => e.exit(),
-    };
-
-    let ws2300 = ws2300::Device::new(args.arg_device);
+    let ws2300 = ws2300::Device::new(opt.device);
 
     let data = match ws2300.read_all() {
         Ok(data) => data,
