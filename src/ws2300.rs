@@ -6,11 +6,11 @@ use std::time::Duration;
 
 pub struct Device
 {
-    port: Box<RefCell<serial::SerialPort>>,
+    port: Box<RefCell<dyn serial::SerialPort>>,
     memory: MemoryMap,
 }
 
-#[derive(Serialize)]
+#[derive(serde_derive::Serialize)]
 pub struct Data
 {
     temperature_indoor: f32,
@@ -79,7 +79,7 @@ impl Device
         }
     }
 
-    fn open(device: String) -> Box<RefCell<serial::SerialPort>>
+    fn open(device: String) -> Box<RefCell<dyn serial::SerialPort>>
     {
         let mut port = match serial::open(&device) {
             Ok(port) => port,
@@ -94,7 +94,7 @@ impl Device
         Box::new(RefCell::new(port))
     }
 
-    fn setup(port: &mut serial::SerialPort) -> serial::Result<()>
+    fn setup(port: &mut dyn serial::SerialPort) -> serial::Result<()>
     {
         const SETTINGS: serial::PortSettings = serial::PortSettings {
             baud_rate: serial::Baud2400,

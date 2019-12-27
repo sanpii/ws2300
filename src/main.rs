@@ -1,17 +1,10 @@
-extern crate serial;
-extern crate docopt;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_json;
-
 use docopt::Docopt;
 
 mod ws2300;
 
 static USAGE: &'static str = "Usage: ws2300 <device>";
 
-#[derive(Deserialize)]
+#[derive(serde_derive::Deserialize)]
 struct Args
 {
     arg_device: String,

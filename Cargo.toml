@@ -2,6 +2,7 @@
 name = "ws2300"
 version = "1.0.0"
 authors = ["Sanpi <sanpi@homecomputing.fr>"]
+edition = "2018"
 
 [dependencies]
 serial = "0.3"
