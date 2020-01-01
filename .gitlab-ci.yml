@@ -1,0 +1,12 @@
+image: "rust:latest"
+
+lint:clippy:
+    before_script:
+        - rustup component add clippy
+    script: cargo clippy -- --deny warnings
+
+test:debug:
+    script: cargo test --all-features
+
+test:release:
+    script: cargo test --all-features --release
