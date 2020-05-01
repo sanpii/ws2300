@@ -1,5 +1,3 @@
-use std;
-use serial;
 use std::cell::RefCell;
 use std::thread::sleep;
 use std::time::Duration;
