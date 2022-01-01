@@ -5,13 +5,11 @@ use clap::Parser;
 mod ws2300;
 
 #[derive(Parser)]
-struct Opt
-{
+struct Opt {
     device: String,
 }
 
-fn main()
-{
+fn main() {
     let opt = Opt::parse();
 
     let ws2300 = ws2300::Device::new(opt.device);
