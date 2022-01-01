@@ -1,9 +1,0 @@
-language: rust
-
-cache: cargo
-
-sudo: false
-
-install: cargo test --no-run
-
-script: cargo test
