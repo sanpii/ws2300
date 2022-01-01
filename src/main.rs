@@ -1,10 +1,10 @@
 #![warn(rust_2018_idioms)]
 
-use structopt::StructOpt;
+use clap::Parser;
 
 mod ws2300;
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 struct Opt
 {
     device: String,
@@ -12,7 +12,7 @@ struct Opt
 
 fn main()
 {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     let ws2300 = ws2300::Device::new(opt.device);
 
