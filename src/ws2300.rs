@@ -357,28 +357,31 @@ impl Device {
     fn reset(&self) -> serial::Result<()> {
         let mut buffer: [u8; 1] = [0; 1];
 
-        'outer: for _ in 0..100 {
+        for x in 0..100 {
             self.port.borrow_mut().flush()?;
             self.port.borrow_mut().write_all(&[0x06])?;
 
-            sleep(Duration::from_millis(100));
-
-            // FIXME possible infinite loop
             loop {
-                match self.port.borrow_mut().read_exact(&mut buffer[..]) {
-                    Ok(_) => {}
-                    Err(_) => {
-                        return Err(serial::Error::new(
+                self.port
+                    .borrow_mut()
+                    .read_exact(&mut buffer[..])
+                    .map_err(|_| {
+                        serial::Error::new(
                             serial::ErrorKind::Io(std::io::ErrorKind::Other),
                             "reset failed",
-                        ))
-                    }
-                };
+                        )
+                    })?;
 
-                if buffer[0] == 2 {
-                    break 'outer;
+                if buffer[0] == 1 {
+                    continue;
+                } else if buffer[0] == 2 {
+                    return Ok(());
+                } else {
+                    break;
                 }
             }
+
+            sleep(Duration::from_millis(100 * x));
         }
 
         Ok(())
