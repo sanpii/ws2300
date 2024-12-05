@@ -28,6 +28,8 @@ jobs:
           toolchain: stable
           components: clippy
 
+      - name: install libudev
+        run: sudo apt update -yqq && sudo apt install -yqq libudev-dev
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- --deny warnings
 
@@ -43,6 +45,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
+
+      - name: install libudev
+        run: sudo apt update -yqq && sudo apt install -yqq libudev-dev
 
       - name: Run tests (debug)
         if: matrix.mode == 'debug'

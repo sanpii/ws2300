@@ -3,10 +3,18 @@ image: "rust:latest"
 lint:clippy:
     before_script:
         - rustup component add clippy
+        - apt update -yqq
+        - apt install -yqq libudev-dev
     script: cargo clippy -- --deny warnings
 
 test:debug:
+    before_script:
+        - apt update -yqq
+        - apt install -yqq libudev-dev
     script: cargo test --all-targets --all-features
 
 test:release:
+    before_script:
+        - apt update -yqq
+        - apt install -yqq libudev-dev
     script: cargo test --all-features --release
