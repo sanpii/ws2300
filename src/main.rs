@@ -16,11 +16,11 @@ fn main() {
 
     let data = match ws2300.read_all() {
         Ok(data) => data,
-        Err(err) => panic!("Read error: {}", err),
+        Err(err) => panic!("Read error: {err}"),
     };
 
     match serde_json::to_string(&data) {
-        Ok(json) => println!("{}", json),
-        Err(err) => panic!("JSON error: {}", err),
+        Ok(json) => println!("{json}"),
+        Err(err) => panic!("JSON error: {err}"),
     };
 }

@@ -119,12 +119,12 @@ impl Device {
 
         let mut port = match builder.open() {
             Ok(port) => port,
-            Err(err) => panic!("Unable to open {}: {}.", device, err),
+            Err(err) => panic!("Unable to open {device}: {err}."),
         };
 
         match Self::setup(&mut port) {
             Ok(_) => (),
-            Err(err) => panic!("Setup error: {}", err),
+            Err(err) => panic!("Setup error: {err}"),
         };
 
         RefCell::new(port)
