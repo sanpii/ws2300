@@ -3,7 +3,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 pub struct Device {
-    port: Box<RefCell<dyn serial::SerialPort>>,
+    port: RefCell<Box<dyn serialport::SerialPort>>,
     memory: MemoryMap,
 }
 
@@ -110,8 +110,14 @@ impl Device {
         }
     }
 
-    fn open(device: String) -> Box<RefCell<dyn serial::SerialPort>> {
-        let mut port = match serial::open(&device) {
+    fn open(device: String) -> RefCell<Box<dyn serialport::SerialPort>> {
+        let builder = serialport::new(&device, 2_400)
+            .data_bits(serialport::DataBits::Eight)
+            .flow_control(serialport::FlowControl::None)
+            .parity(serialport::Parity::None)
+            .stop_bits(serialport::StopBits::One);
+
+        let mut port = match builder.open() {
             Ok(port) => port,
             Err(err) => panic!("Unable to open {}: {}.", device, err),
         };
@@ -121,26 +127,17 @@ impl Device {
             Err(err) => panic!("Setup error: {}", err),
         };
 
-        Box::new(RefCell::new(port))
+        RefCell::new(port)
     }
 
-    fn setup(port: &mut dyn serial::SerialPort) -> serial::Result<()> {
-        const SETTINGS: serial::PortSettings = serial::PortSettings {
-            baud_rate: serial::Baud2400,
-            char_size: serial::Bits8,
-            flow_control: serial::FlowNone,
-            parity: serial::ParityNone,
-            stop_bits: serial::Stop1,
-        };
-
-        port.configure(&SETTINGS)?;
-        port.set_rts(true)?;
-        port.set_dtr(false)?;
+    fn setup(port: &mut Box<dyn serialport::SerialPort>) -> serialport::Result<()> {
+        port.write_request_to_send(true)?;
+        port.write_data_terminal_ready(false)?;
 
         Ok(())
     }
 
-    pub fn read_all(&self) -> serial::Result<Data> {
+    pub fn read_all(&self) -> serialport::Result<Data> {
         Ok(Data {
             temperature_indoor: self.temperature_indoor()?,
             temperature_outdoor: self.temperature_outdoor()?,
@@ -160,19 +157,19 @@ impl Device {
         })
     }
 
-    pub fn temperature_indoor(&self) -> serial::Result<f32> {
+    pub fn temperature_indoor(&self) -> serialport::Result<f32> {
         self.temperature(&self.memory.temperature_indoor)
     }
 
-    pub fn temperature_outdoor(&self) -> serial::Result<f32> {
+    pub fn temperature_outdoor(&self) -> serialport::Result<f32> {
         self.temperature(&self.memory.temperature_outdoor)
     }
 
-    pub fn dewpoint(&self) -> serial::Result<f32> {
+    pub fn dewpoint(&self) -> serialport::Result<f32> {
         self.temperature(&self.memory.dewpoint)
     }
 
-    fn temperature(&self, memory: &Memory) -> serial::Result<f32> {
+    fn temperature(&self, memory: &Memory) -> serialport::Result<f32> {
         let value = self.try_read(memory)?;
 
         let low = (value[0] >> 4) as f32 / 10.0 + (value[0] & 0xF) as f32 / 100.0;
@@ -181,15 +178,15 @@ impl Device {
         Ok(Self::round(high + low - 30.0, 1))
     }
 
-    pub fn humidity_indoor(&self) -> serial::Result<u32> {
+    pub fn humidity_indoor(&self) -> serialport::Result<u32> {
         self.humidity(&self.memory.humidity_indoor)
     }
 
-    pub fn humidity_outdoor(&self) -> serial::Result<u32> {
+    pub fn humidity_outdoor(&self) -> serialport::Result<u32> {
         self.humidity(&self.memory.humidity_outdoor)
     }
 
-    fn humidity(&self, memory: &Memory) -> serial::Result<u32> {
+    fn humidity(&self, memory: &Memory) -> serialport::Result<u32> {
         let value = self.try_read(memory)?;
 
         let low = (value[0] >> 4) as u32 * 10 + (value[0] & 0xF) as u32;
@@ -197,13 +194,13 @@ impl Device {
         Ok(low)
     }
 
-    pub fn wind_speed(&self) -> serial::Result<f32> {
+    pub fn wind_speed(&self) -> serialport::Result<f32> {
         let value = self.try_read(&self.memory.wind_speed)?;
 
         Ok(((((value[1] & 0xF) as u16) << 8) as f32 + value[0] as f32) / 10.0)
     }
 
-    pub fn wind_dir(&self) -> serial::Result<f32> {
+    pub fn wind_dir(&self) -> serialport::Result<f32> {
         let value = self.try_read(&self.memory.wind_dir)?;
 
         let low = (value[0] >> 4) as f32;
@@ -211,7 +208,7 @@ impl Device {
         Ok(Self::round(low * 22.5, 1))
     }
 
-    pub fn wind_direction(&self) -> serial::Result<String> {
+    pub fn wind_direction(&self) -> serialport::Result<String> {
         let directions: Vec<&'static str> = vec![
             "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW",
             "NW", "NNW",
@@ -223,23 +220,23 @@ impl Device {
         Ok(String::from(directions[index]))
     }
 
-    pub fn wind_chill(&self) -> serial::Result<f32> {
+    pub fn wind_chill(&self) -> serialport::Result<f32> {
         self.temperature(&self.memory.wind_chill)
     }
 
-    pub fn rain_1h(&self) -> serial::Result<f32> {
+    pub fn rain_1h(&self) -> serialport::Result<f32> {
         self.rain(&self.memory.rain_1h)
     }
 
-    pub fn rain_24h(&self) -> serial::Result<f32> {
+    pub fn rain_24h(&self) -> serialport::Result<f32> {
         self.rain(&self.memory.rain_24h)
     }
 
-    pub fn rain_total(&self) -> serial::Result<f32> {
+    pub fn rain_total(&self) -> serialport::Result<f32> {
         self.rain(&self.memory.rain_total)
     }
 
-    fn rain(&self, memory: &Memory) -> serial::Result<f32> {
+    fn rain(&self, memory: &Memory) -> serialport::Result<f32> {
         let value = self.try_read(memory)?;
 
         let low = (value[0] >> 4) as f32 / 10.0 + (value[0] & 0xF) as f32 / 100.0;
@@ -249,7 +246,7 @@ impl Device {
         Ok(Self::round(low + med + high, 1))
     }
 
-    pub fn pressure(&self) -> serial::Result<f32> {
+    pub fn pressure(&self) -> serialport::Result<f32> {
         let value = self.try_read(&self.memory.pressure)?;
 
         let low = (value[0] >> 4) as f32 + (value[0] & 0xF) as f32 / 10.0;
@@ -259,7 +256,7 @@ impl Device {
         Ok(Self::round(low + med + high, 1))
     }
 
-    pub fn tendency(&self) -> serial::Result<String> {
+    pub fn tendency(&self) -> serialport::Result<String> {
         let tendencies: Vec<&'static str> = vec!["Steady", "Rising", "Falling"];
 
         let value = self.try_read(&self.memory.tendency)?;
@@ -269,7 +266,7 @@ impl Device {
         Ok(String::from(tendencies[index]))
     }
 
-    pub fn forecast(&self) -> serial::Result<String> {
+    pub fn forecast(&self) -> serialport::Result<String> {
         let forecasts: Vec<&'static str> = vec!["Rainy", "Cloudy", "Sunny"];
 
         let value = self.try_read(&self.memory.tendency)?;
@@ -279,20 +276,20 @@ impl Device {
         Ok(String::from(forecasts[index]))
     }
 
-    fn try_read(&self, memory: &Memory) -> serial::Result<Vec<u8>> {
+    fn try_read(&self, memory: &Memory) -> serialport::Result<Vec<u8>> {
         for _ in 0..50 {
             if let Ok(n) = self.read(memory) {
                 return Ok(n);
             }
         }
 
-        Err(serial::Error::new(
-            serial::ErrorKind::Io(std::io::ErrorKind::Other),
+        Err(serialport::Error::new(
+            serialport::ErrorKind::Io(std::io::ErrorKind::Other),
             "Try read error",
         ))
     }
 
-    fn read(&self, memory: &Memory) -> serial::Result<Vec<u8>> {
+    fn read(&self, memory: &Memory) -> serialport::Result<Vec<u8>> {
         let mut response: Vec<u8> = Vec::with_capacity(memory.size);
         let mut buffer: [u8; 1] = [0; 1];
         let command = Self::encode_address(memory);
@@ -318,7 +315,7 @@ impl Device {
         Ok(response)
     }
 
-    fn check(command: u8, sequence: usize, answer: u8) -> serial::Result<()> {
+    fn check(command: u8, sequence: usize, answer: u8) -> serialport::Result<()> {
         let checksum = if sequence < 4 {
             (sequence as u8) * 16 + (command - 0x82) / 4
         } else {
@@ -328,14 +325,14 @@ impl Device {
         if checksum == answer {
             Ok(())
         } else {
-            Err(serial::Error::new(
-                serial::ErrorKind::Io(std::io::ErrorKind::Other),
+            Err(serialport::Error::new(
+                serialport::ErrorKind::Io(std::io::ErrorKind::Other),
                 "Check error",
             ))
         }
     }
 
-    fn check_data(answer: u8, response: Vec<u8>) -> serial::Result<()> {
+    fn check_data(answer: u8, response: Vec<u8>) -> serialport::Result<()> {
         let mut checksum: u32 = 0;
 
         for r in &response {
@@ -347,14 +344,14 @@ impl Device {
         if checksum == answer as u32 {
             Ok(())
         } else {
-            Err(serial::Error::new(
-                serial::ErrorKind::Io(std::io::ErrorKind::Other),
+            Err(serialport::Error::new(
+                serialport::ErrorKind::Io(std::io::ErrorKind::Other),
                 "Check data error",
             ))
         }
     }
 
-    fn reset(&self) -> serial::Result<()> {
+    fn reset(&self) -> serialport::Result<()> {
         let mut buffer: [u8; 1] = [0; 1];
 
         for x in 0..100 {
@@ -366,8 +363,8 @@ impl Device {
                     .borrow_mut()
                     .read_exact(&mut buffer[..])
                     .map_err(|_| {
-                        serial::Error::new(
-                            serial::ErrorKind::Io(std::io::ErrorKind::Other),
+                        serialport::Error::new(
+                            serialport::ErrorKind::Io(std::io::ErrorKind::Other),
                             "reset failed",
                         )
                     })?;
