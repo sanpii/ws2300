@@ -5,12 +5,16 @@ members = [".", "bin"]
 version = "1.0.0"
 authors = ["Sanpi <sanpi@homecomputing.fr>"]
 edition = "2021"
+license = "MIT"
 
 [package]
 name = "ws2300"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license.workspace = true
+description = "Read ws2300 weather station information"
+repository = "https://github.com/sanpii/ws2300/"
 
 [dependencies]
 serialport = "4.6"
