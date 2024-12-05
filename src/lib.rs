@@ -9,7 +9,7 @@ pub struct Device {
     memory: MemoryMap,
 }
 
-#[derive(serde_derive::Serialize)]
+#[derive(serde::Serialize)]
 pub struct Data {
     temperature_indoor: f32,
     temperature_outdoor: f32,
