@@ -6,7 +6,7 @@ lint:clippy:
     script: cargo clippy -- --deny warnings
 
 test:debug:
-    script: cargo test --all-features
+    script: cargo test --all-targets --all-features
 
 test:release:
     script: cargo test --all-features --release
