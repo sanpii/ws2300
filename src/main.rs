@@ -9,10 +9,10 @@ struct Opt {
     device: String,
 }
 
-fn main() {
+fn main() -> serialport::Result<()> {
     let opt = Opt::parse();
 
-    let ws2300 = ws2300::Device::new(opt.device);
+    let ws2300 = ws2300::Device::new(opt.device)?;
 
     let data = match ws2300.read_all() {
         Ok(data) => data,
@@ -23,4 +23,6 @@ fn main() {
         Ok(json) => println!("{json}"),
         Err(err) => panic!("JSON error: {err}"),
     };
+
+    Ok(())
 }

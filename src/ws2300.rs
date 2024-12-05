@@ -48,7 +48,7 @@ struct Memory {
 }
 
 impl Device {
-    pub fn new(device: String) -> Device {
+    pub fn new(device: String) -> serialport::Result<Device> {
         let memory = MemoryMap {
             temperature_indoor: Memory {
                 address: 0x346,
@@ -104,30 +104,25 @@ impl Device {
             },
         };
 
-        Device {
-            port: Self::open(device),
+        let device = Device {
+            port: Self::open(device)?.into(),
             memory,
-        }
+        };
+
+        Ok(device)
     }
 
-    fn open(device: String) -> RefCell<Box<dyn serialport::SerialPort>> {
-        let builder = serialport::new(&device, 2_400)
+    fn open(device: String) -> serialport::Result<Box<dyn serialport::SerialPort>> {
+        let mut port = serialport::new(&device, 2_400)
             .data_bits(serialport::DataBits::Eight)
             .flow_control(serialport::FlowControl::None)
             .parity(serialport::Parity::None)
-            .stop_bits(serialport::StopBits::One);
+            .stop_bits(serialport::StopBits::One)
+            .open()?;
 
-        let mut port = match builder.open() {
-            Ok(port) => port,
-            Err(err) => panic!("Unable to open {device}: {err}."),
-        };
+        Self::setup(&mut port)?;
 
-        match Self::setup(&mut port) {
-            Ok(_) => (),
-            Err(err) => panic!("Setup error: {err}"),
-        };
-
-        RefCell::new(port)
+        Ok(port)
     }
 
     fn setup(port: &mut Box<dyn serialport::SerialPort>) -> serialport::Result<()> {
