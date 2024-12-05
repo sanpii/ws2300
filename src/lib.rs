@@ -1,3 +1,5 @@
+#![warn(warnings)]
+
 use std::cell::RefCell;
 use std::thread::sleep;
 use std::time::Duration;

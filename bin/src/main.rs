@@ -2,14 +2,12 @@
 
 use clap::Parser;
 
-mod ws2300;
-
 #[derive(Parser)]
 struct Opt {
     device: String,
 }
 
-fn main() -> serialport::Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::parse();
 
     let ws2300 = ws2300::Device::new(opt.device)?;

@@ -1,0 +1,16 @@
+[package]
+name = "ws2300-cli"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde_json = "1.0"
+
+[dependencies.ws2300]
+version = "1.0"
+path = ".."
+
+[dependencies.clap]
+version = "4.0"
+features = ["derive"]
